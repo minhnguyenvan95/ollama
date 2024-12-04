@@ -43,26 +43,34 @@ func ParseModelPath(name string) ModelPath {
 		Tag:            DefaultTag,
 	}
 
+	// Phân tách scheme nếu có
 	before, after, found := strings.Cut(name, "://")
 	if found {
 		mp.ProtocolScheme = before
 		name = after
 	}
 
+	// Thay thế đường dẫn phân cách thành "/"
 	name = strings.ReplaceAll(name, string(os.PathSeparator), "/")
 	parts := strings.Split(name, "/")
-	switch len(parts) {
-	case 3:
+
+	switch {
+	case len(parts) > 3:
+		mp.Registry = parts[0]                              // Phần đầu là Registry
+		mp.Repository = parts[len(parts)-1]                // Phần cuối là Repository
+		mp.Namespace = strings.Join(parts[1:len(parts)-1], "/") // Phần giữa là Namespace
+	case len(parts) == 3:
 		mp.Registry = parts[0]
 		mp.Namespace = parts[1]
 		mp.Repository = parts[2]
-	case 2:
+	case len(parts) == 2:
 		mp.Namespace = parts[0]
 		mp.Repository = parts[1]
-	case 1:
+	case len(parts) == 1:
 		mp.Repository = parts[0]
 	}
 
+	// Phân tách tag nếu có
 	if repo, tag, found := strings.Cut(mp.Repository, ":"); found {
 		mp.Repository = repo
 		mp.Tag = tag
